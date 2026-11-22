@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选题工作台 · 云同步版</title>
+<style>
+:root{--bg:#F7F6F3;--card:#fff;--ink:#333;--sub:#999;--line:#ECEAE5;--blue:#5B8DB8;--green:#7BA05B;--orange:#D9945B;--gray:#B0ABA3;--red:#C0574F;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);padding:20px;}
+.wrap{max-width:1360px;margin:0 auto;}
+h1{font-size:22px;text-align:center;letter-spacing:2px;padding:14px 0 4px;}
+.subt{text-align:center;color:var(--sub);font-size:12px;margin-bottom:18px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;}
+.stat b{font-size:24px;}
+.stat small{color:var(--sub);font-size:12px;margin-left:6px;}
+.stat .lb{font-size:13px;color:var(--sub);margin-top:4px;}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.bar button{padding:8px 16px;border:1px solid var(--line);border-radius:9px;background:#fff;font-size:13px;cursor:pointer;color:var(--ink);}
+.bar button:hover{border-color:var(--blue);color:var(--blue);}
+.bar button.pri{background:var(--blue);border-color:var(--blue);color:#fff;}
+.bar button.pri:hover{opacity:.85;color:#fff;}
+.bar .who{margin-left:auto;font-size:12.5px;color:var(--sub);}
+.addform{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+.addform.show{display:flex;}
+.addform input{flex:1;min-width:150px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;outline:none;}
+.addform input:focus{border-color:var(--blue);}
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.kcol{background:#EFEEE9;border-radius:12px;padding:10px;min-height:200px;}
+.kcol h3{font-size:13px;color:var(--sub);margin:2px 4px 10px;display:flex;justify-content:space-between;}
+.kcol h3 b{color:var(--ink);}
+.kcol.over{outline:2px dashed var(--blue);outline-offset:-4px;}
+.kcard{background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.05);position:relative;}
+.kcard:active{cursor:grabbing;}
+.kcard .t{font-size:12.5px;font-weight:600;line-height:1.45;padding-right:18px;}
+.kcard .m{font-size:11px;color:var(--sub);margin-top:5px;display:flex;justify-content:space-between;gap:8px;}
+.kcard .del{position:absolute;top:6px;right:8px;color:#C9C4BC;cursor:pointer;font-size:13px;display:none;}
+.kcard:hover .del{display:block;}
+.kcard .del:hover{color:var(--red);}
+.kcard .ai{position:absolute;bottom:6px;right:8px;color:#5B8DB8;cursor:pointer;font-size:11px;display:none;}
+.kcard:hover .ai{display:block;}
+.kcard.has-ai .t::after{content:" ✦";color:#5B8DB8;font-size:11px;}
+.empty{color:var(--sub);font-size:12.5px;text-align:center;padding:26px 0;}
+#banner{display:none;background:#FCEBEB;color:#791F1F;border:1px solid #F09595;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;}
+#toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:10px 22px;border-radius:22px;font-size:13px;opacity:0;transition:all .3s;z-index:99;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* AI 拆解弹窗 */
+#aimodal{display:none;position:fixed;inset:0;background:rgba(40,35,32,.45);z-index:90;align-items:center;justify-content:center;padding:20px;}
+#aimodal.show{display:flex;}
+.aibox{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:88vh;display:flex;flex-direction:column;padding:22px;}
+.aibox .ahead{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.aibox .ahead h3{font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aibox .ahead button{padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12.5px;cursor:pointer;}
+.aibox .ahead button.pri{background:var(--blue);border-color:var(--blue);color:#fff;}
+.aistatus{font-size:12px;color:var(--sub);min-height:18px;margin-bottom:8px;}
+.aiout{flex:1;overflow:auto;background:#FAF7F4;border-radius:10px;padding:16px;font-size:13.5px;line-height:1.85;white-space:pre-wrap;}
+/* 登录视图 */
+#login{max-width:380px;margin:12vh auto 0;text-align:center;}
+#login .logo{font-size:40px;margin-bottom:12px;}
+#login h2{font-size:19px;margin-bottom:8px;}
+#login p{font-size:13px;color:var(--sub);margin-bottom:26px;line-height:1.7;}
+#login button{width:100%;padding:13px 0;border:none;border-radius:12px;background:var(--blue);color:#fff;font-size:15px;cursor:pointer;letter-spacing:1px;}
+#login button:hover{opacity:.88;}
+#login .err{color:var(--red);font-size:12.5px;margin-top:14px;min-height:18px;}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.kanban{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="logo">📝</div>
+  <h2>选题工作台 · 云同步版</h2>
+  <p>选题池、阅读进度全部存云端<br>换电脑、换手机，登录就能接着用</p>
+  <button onclick="doLogin()">使用 WorkBuddy 登录</button>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <h1>📝 选题工作台</h1>
+  <div class="subt">云端同步 · 拖动卡片改状态，自动保存</div>
+  <div id="banner"></div>
+  <div class="stats" id="stats"></div>
+  <div class="bar">
+    <button class="pri" onclick="toggleAdd()">＋ 添加文章</button>
+    <button onclick="document.getElementById('impFile').click()">导入本地 articles.json</button>
+    <input type="file" id="impFile" accept=".json" style="display:none" onchange="importJSON(this)">
+    <button onclick="exportJSON()">导出备份</button>
+    <button onclick="refresh()">刷新</button>
+    <span class="who" id="who"></span>
+    <button onclick="signOut()">退出</button>
+  </div>
+  <div class="addform" id="addForm">
+    <input id="fTitle" placeholder="文章标题 *">
+    <input id="fAccount" placeholder="公众号名">
+    <input id="fLink" placeholder="文章链接（mp.weixin.qq.com/...）">
+    <input id="fDate" type="date">
+    <button class="pri" onclick="addArticle()">保存到云端</button>
+  </div>
+  <div class="kanban" id="kb"></div>
+</div>
+<div id="toast"></div>
+<div id="aimodal"><div class="aibox">
+  <div class="ahead"><h3 id="aiTitle"></h3><button id="aiStop" onclick="aiAbort()" style="display:none">停止</button><button class="pri" id="aiGo" onclick="runAnalysis()">开始拆解</button><button onclick="closeAI()">关闭</button></div>
+  <div class="aistatus" id="aiStatus"></div>
+  <div class="aiout" id="aiOut">在卡片上点 ✦ AI拆解：自动把这篇文章拆成 选题角度 / 标题公式 / 结构骨架 / 可复用钩子，结果保存到云端。</div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script>
+const publicConfig = {
+  // 脱敏模板：换成你自己在 WorkBuddy cloud-service 里创建的应用 endpoint 和 publishableKey
+  endpoint: "<你的云服务应用 endpoint，形如 https://<app-id>.app.workbuddy.host>",
+  oauthRelayBaseUrl: "https://www.workbuddy.cn/v2/as/genie-baas/oauth",
+  publishableKey: "wbpk_<你的 publishableKey>"
+};
+const cloud = WorkBuddyCloud.createWorkBuddyCloud({
+  endpoint: publicConfig.endpoint,
+  oauthRelayBaseUrl: publicConfig.oauthRelayBaseUrl,
+  publishableKey: publicConfig.publishableKey,
+});
+const COLS = ["待看","可借鉴","已看"];
+let ARTS = [], USER = null;
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),1600);}
+function banner(msg){const b=document.getElementById("banner");if(msg){b.textContent=msg;b.style.display="block";}else b.style.display="none";}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
+
+/* ---------- 启动：先处理 OAuth 回调，再恢复会话 ---------- */
+async function restoreAuth(){
+  const url = new URL(location.href);
+  if (!url.searchParams.has("code") && !url.searchParams.has("error")) { await continueStartup(); return; }
+  const provider = url.searchParams.get("provider");
+  if (provider !== "workbuddy") { showLoginErr("授权回调缺少有效的登录方式，请重新登录。"); return; }
+  const { data: session, error } = await cloud.auth.handleWorkBuddyCallback.call(cloud.auth);
+  if (error) { showLoginErr(error.message); return; }
+  if (session) {
+    for (const k of ["code","state","provider"]) url.searchParams.delete(k);
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+    await enterApp(session);
+  } else await continueStartup();
+}
+async function continueStartup(){
+  const { data: session, error } = await cloud.auth.getSession();
+  if (error || !session) showLoginView(); else await enterApp(session);
+}
+function showLoginView(){document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";}
+function showLoginErr(m){showLoginView();document.getElementById("loginErr").textContent=m||"";}
+async function doLogin(){
+  document.getElementById("loginErr").textContent="";
+  const { data, error } = await cloud.auth.signInWithOAuth({ provider: "workbuddy", redirectTo: location.origin });
+  if (error) { document.getElementById("loginErr").textContent = error.message; return; }
+  location.assign(data.url);
+}
+async function signOut(){ await cloud.auth.signOut(); location.replace(location.origin); }
+
+/* ---------- 主界面 ---------- */
+async function enterApp(session){
+  USER = session.user;
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("who").textContent = "👤 " + (USER.name || USER.email || "已登录");
+  await refresh();
+}
+async function refresh(){
+  banner("");
+  const { data, error } = await cloud.database.from("articles").select("*").order("created_at", { ascending: false });
+  if (error) { banner("读取失败：" + error.message); return; }
+  ARTS = data || [];
+  renderStats(); renderKanban();
+}
+function renderStats(){
+  const today = new Date().toISOString().slice(0,10);
+  const d7 = new Date(Date.now()-6*864e5).toISOString().slice(0,10);
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><b>${ARTS.filter(a=>a.pub_date===today).length}</b><small>近7天 ${ARTS.filter(a=>a.pub_date>=d7).length}</small><div class="lb">同行更新</div></div>
+    <div class="stat"><b>${ARTS.filter(a=>a.status==="待看").length}</b><small>篇</small><div class="lb">待看</div></div>
+    <div class="stat"><b>${ARTS.filter(a=>a.status==="可借鉴").length}</b><small>篇</small><div class="lb">可借鉴（选题池）</div></div>
+    <div class="stat"><b>${ARTS.length}</b><small>篇</small><div class="lb">云端总量</div></div>`;
+}
+function renderKanban(){
+  document.getElementById("kb").innerHTML = COLS.map(c=>{
+    const list = ARTS.filter(a=>(a.status||"待看")===c);
+    return `<div class="kcol" data-col="${c}">
+      <h3>${c} <b>${list.length}</b></h3>
+      ${list.map(a=>`<div class="kcard ${a.analysis?'has-ai':''}" draggable="true" data-id="${a.id}">
+        <span class="del" title="删除" onclick="delArticle(${a.id})">✕</span>
+        <span class="ai" title="${a.analysis?'查看/重新拆解':'AI 拆解'}" onclick="openAI(${a.id})">✦ AI拆解</span>
+        <div class="t">${a.link?`<a href="${esc(a.link)}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${esc(a.title)}</a>`:esc(a.title)}</div>
+        <div class="m"><span>${esc(a.account||"")}</span><span>${esc(a.pub_date||"")}</span></div></div>`).join("") || '<div class="empty">拖卡片到这里</div>'}
+    </div>`;}).join("");
+  bindDnD();
+}
+function bindDnD(){
+  document.querySelectorAll(".kcard").forEach(c=>{
+    c.addEventListener("dragstart",e=>{e.dataTransfer.setData("id",c.dataset.id);c.style.opacity=.4;});
+    c.addEventListener("dragend",()=>c.style.opacity=1);
+  });
+  document.querySelectorAll(".kcol").forEach(col=>{
+    col.addEventListener("dragover",e=>{e.preventDefault();col.classList.add("over");});
+    col.addEventListener("dragleave",()=>col.classList.remove("over"));
+    col.addEventListener("drop",async e=>{
+      e.preventDefault();col.classList.remove("over");
+      const id = +e.dataTransfer.getData("id"); if(!id) return;
+      const art = ARTS.find(a=>a.id===id); if(!art||art.status===col.dataset.col) return;
+      const old = art.status; art.status = col.dataset.col; renderKanban(); renderStats();
+      const { data, error } = await cloud.database.from("articles").update({ status: art.status }).eq("id", id).select();
+      if (error || (Array.isArray(data)&&data.length===0)) {
+        art.status = old; renderKanban();
+        banner(error ? "保存失败：" + error.message : "保存失败（云端拒绝），请确认登录状态");
+      }
+    });
+  });
+}
+function toggleAdd(){document.getElementById("addForm").classList.toggle("show");}
+async function addArticle(){
+  const title = document.getElementById("fTitle").value.trim();
+  if (!title) return toast("标题必填");
+  const row = { title,
+    account: document.getElementById("fAccount").value.trim() || null,
+    link: document.getElementById("fLink").value.trim() || null,
+    pub_date: document.getElementById("fDate").value || new Date().toISOString().slice(0,10),
+    status: "待看" };
+  const { data, error } = await cloud.database.from("articles").insert(row).select();
+  if (error) { banner("保存失败：" + error.message); return; }
+  if (!data || !data.length) { banner("保存失败（云端拒绝写入）"); return; }
+  ["fTitle","fAccount","fLink"].forEach(i=>document.getElementById(i).value="");
+  document.getElementById("addForm").classList.remove("show");
+  toast("已保存到云端"); await refresh();
+}
+async function importJSON(input){
+  const f = input.files[0]; if (!f) return;
+  let arr;
+  try { arr = JSON.parse(await f.text()); } catch { return banner("文件不是合法 JSON"); }
+  if (arr.length && Array.isArray(arr[0]?.colors)) return banner("这是配色 palettes.json，请选工作台的 articles.json");
+  const known = new Set(ARTS.map(a=>a.link||a.title));
+  const rows = arr.filter(a=>a.title && !known.has(a.link||a.title)).map(a=>({
+    title: a.title, account: a.account||null, link: a.link||null,
+    cover: a.cover||null, digest: a.digest||null, content: (a.content||"").slice(0,8000)||null,
+    pub_date: a.date||a.pub_date||new Date().toISOString().slice(0,10),
+    status: a.status||"待看" }));
+  if (!rows.length) return toast("没有新文章（全部已存在）");
+  const { error } = await cloud.database.from("articles").insert(rows);
+  if (error) return banner("导入失败：" + error.message);
+  input.value = ""; toast(`已导入 ${rows.length} 篇到云端`); await refresh();
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(ARTS,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="articles_cloud_backup.json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2e3);
+}
+async function delArticle(id){
+  const { data, error } = await cloud.database.from("articles").delete().eq("id", id).select();
+  if (error) return banner("删除失败：" + error.message);
+  if (!Array.isArray(data) || !data.length) return banner("删除失败（云端拒绝），请确认登录状态");
+  toast("已删除"); await refresh();
+}
+
+/* ---------- AI 拆解 ---------- */
+let AI_MODEL = null, AI_CTRL = null, AI_ART = null;
+async function pickModel(){
+  if (AI_MODEL) return AI_MODEL;
+  const models = await cloud.llm.models.list();
+  if (!models.length) throw new Error("模型列表为空，请联系平台开通模型能力");
+  const m = models.find(x=>x.disabled!==true);
+  if (!m) throw new Error("当前没有可用模型");
+  AI_MODEL = m; return m;
+}
+function openAI(id){
+  AI_ART = ARTS.find(a=>a.id===id); if (!AI_ART) return;
+  document.getElementById("aiTitle").textContent = AI_ART.title;
+  document.getElementById("aiStatus").textContent = "";
+  document.getElementById("aiGo").style.display = "";
+  document.getElementById("aiStop").style.display = "none";
+  document.getElementById("aiOut").textContent = AI_ART.analysis || "在卡片上点 ✦ AI拆解：自动把这篇文章拆成 选题角度 / 标题公式 / 结构骨架 / 可复用钩子，结果保存到云端。";
+  document.getElementById("aimodal").classList.add("show");
+  if (AI_ART.analysis) runAnalysis();
+}
+function closeAI(){ if (AI_CTRL) AI_CTRL.abort(); document.getElementById("aimodal").classList.remove("show"); refresh(); }
+function aiAbort(){ if (AI_CTRL) AI_CTRL.abort(); }
+async function runAnalysis(){
+  if (!AI_ART) return;
+  const stat = document.getElementById("aiStatus"), out = document.getElementById("aiOut");
+  document.getElementById("aiGo").style.display = "none";
+  document.getElementById("aiStop").style.display = "";
+  out.textContent = ""; stat.textContent = "正在选取模型…";
+  AI_CTRL = new AbortController();
+  let answer = "";
+  try {
+    const model = await pickModel();
+    stat.textContent = "模型：" + (model.name || model.id) + " · 拆解中…";
+    const src = (AI_ART.content || AI_ART.digest || "").slice(0, 6000);
+    if (!src) throw new Error("这篇文章没有正文内容，先在本地跑 python collect.py --add-url 抓正文再导入");
+    const messages = [
+      { role: "system", content: "你是公众号爆款文章拆解专家。对用户给出的文章做结构化拆解，用简体中文，Markdown 输出以下五节，语言精炼、每节给可直接套用的干货，不要客套话：" +
+        "## 1. 选题角度（这篇文章踩中了什么需求/情绪，2-3条）\n" +
+        "## 2. 标题公式（拆出标题的结构套路，给2个同款变体示例）\n" +
+        "## 3. 结构骨架（按开头钩子→展开逻辑→收尾的顺序列出段落骨架）\n" +
+        "## 4. 可复用钩子（金句、数字、悬念等可搬运的技巧，逐条列）\n" +
+        "## 5. 怎么用到我的号（结合选题给出1个可直接开写的选题建议）" },
+      { role: "user", content: `标题：${AI_ART.title}\n公众号：${AI_ART.account||"未知"}\n\n正文：\n${src}` },
+    ];
+    for await (const chunk of cloud.llm.chat.completions.create({
+      model: model.id, messages, stream: true,
+      stream_options: { include_usage: true },
+      signal: AI_CTRL.signal,
+    })) {
+      const d = chunk.choices[0]?.delta;
+      if (d?.content) { answer += d.content; out.textContent = answer; out.scrollTop = out.scrollHeight; }
+    }
+    stat.textContent = "拆解完成 ✓ 已保存到云端";
+    const { data, error } = await cloud.database.from("articles").update({ analysis: answer }).eq("id", AI_ART.id).select();
+    if (error || !Array.isArray(data) || !data.length) stat.textContent = "拆解完成，但保存到云端失败：" + (error ? error.message : "云端拒绝");
+    AI_ART.analysis = answer;
+  } catch (e) {
+    if (e.name === "AbortError") stat.textContent = "已停止（已输出的内容未保存）";
+    else {
+      const code = (e.error && e.error.code) || "";
+      stat.textContent = code.startsWith("quota_") ? "模型额度不足：" + (e.error?.message || e.message)
+        : code.startsWith("gateway_") || code.startsWith("model_") ? "模型服务暂时不可用，稍后点「开始拆解」重试"
+        : "拆解失败：" + (e.error?.message || e.message);
+    }
+    if (answer) out.textContent = answer;
+  } finally {
+    document.getElementById("aiGo").style.display = "";
+    document.getElementById("aiStop").style.display = "none";
+  }
+}
+restoreAuth();
+</script>
+</body>
+</html>
