@@ -67,6 +67,8 @@ articles/<标题>.md            social-cards/<MMDD-短标题>/output/*.png
 ├── data/
 │   └── articles.json        # 选题池主库（含 title/link/account/date/cover/digest/content/status/added）
 ├── articles/                # 我的成稿 .md（frontmatter: title/date/status，build.py 自动判断进度）
+├── covers/                  # 公众号封面工作目录：covers/<MMDD-短题>/{bg.jpg, index.html, output/cover.png}
+│                            #   模板在 gzh-daily-pipeline 技能 assets/（cover-main.html 暗调主栏目 / cover-sunday.html 暖光科普款），渲染走 info-card-systems 的 render.mjs
 ├── social-cards/            # 小红书图卡套件，一套一个文件夹
 │   ├── README.md            # 图卡制作流程与目录约定（见本仓库 social-cards/README.md）
 │   └── <MMDD-短标题>/
@@ -108,7 +110,10 @@ articles/<标题>.md            social-cards/<MMDD-短标题>/output/*.png
 【桥接·选题雷达】可读 <选题工作台>/data/articles.json（选题雷达每日收集的对标号最新文章清单，含标题/摘要/内容类型标签 tag）。只取 tag 为「复盘/横测/教程/清单」的条目提炼标题套路和选题角度，套用到工装设计选题上（只借鉴结构与写法，不抄内容），汇报中注明借鉴了哪篇；tag 为「资讯」的条目仅作行业情报参考，不作为选题本体。
 ②写稿：按 references/writing-rules.md 执行，1200～1800字，第一人称工装设计师+AI实践者人设，标题≤30字三秒留人，成稿过一遍去AI味六条自查，数据给得出处不编造。
 保密红线：全文与选题不得出现任何真实客户/雇主/品牌方名称，案例一律匿名化（「某展厅项目」「一家建材企业」），不写可反查的地名+业态组合。
-③封面（每篇必做，禁止留空）：用 ImageGen 生成 2.35:1 比例封面，图内不写中文字，内容与文章主题挂钩；压缩到 ≤2MB（推荐 1200×510 JPEG），调 get_upload_channel(scene="cover") 上传，url 填入 cover_img。
+③封面（每篇必做，禁止留空；禁止 ImageGen 单图直出——必须是 AI 背景 + HTML 排版合成，图内文字只能由模板渲染）：三步走——
+  A. 出背景：ImageGen 生成 1536x1024 干净背景图（photorealistic 杂志摄影感，图内不得出现任何文字/字母/水印/表格），风格按主栏目视觉规范：暗调工作室场景（制图台/材料样块/图纸卷/工具），低调布光带青色轮廓光，与文章主题挂钩；提示词禁词：holographic、dashboard、circuit board、futuristic、text、letters。存为 <选题工作台>/covers/<MMDD-短题>/bg.jpg（PIL 打开转 RGB 重存 quality=88）。
+  B. 叠排版：复制 gzh-daily-pipeline 技能 assets/cover-main.html 到该 covers 目录改名 index.html，替换占位符——__BG__→bg.jpg；__VOL__→期号（articles/ 里本栏目成稿篇数）；__TITLE__→文章标题压缩到≤22字（关键短语用 <span class="hl"> 包住变青色）；__SUB__→一句钩子≤20字（可用「真实项目复盘」「横评实测」等系列锚点）。
+  C. 渲染上传：cd 到该 covers 目录跑 node <info-card-systems 技能>/scripts/render.mjs . --out=output → output/cover.png（1200×510）；PIL 转 JPEG（quality=85，白底）压到 ≤2MB，调 get_upload_channel(scene="cover") 上传，url 填入 cover_img。渲染报字体警告属正常（走系统字体）；标题放不下先精简标题再渲染，不要缩字号。
 ④建稿：言序 create_article，abstract≤100字且有信息量（禁"本文介绍了"），表格优先改写成段落，保存 info_id。
 ⑤发布：publish_article 到上述 account_id，不传 theme_id（账号默认终端矩阵）。本次为自动化运行，无需询问直接发布到草稿箱。
 ⑥回流选题工作台：将成稿全文保存为 <选题工作台>/articles/<文章标题>.md，文首加 frontmatter（title: 文章标题 / date: 今天日期 / status: 已完稿）。
@@ -125,7 +130,10 @@ articles/<标题>.md            social-cards/<MMDD-短标题>/output/*.png
 ①选题（搜索需求导向）：先用 WebSearch 挖业主的真实搜索问题——围绕种子词（木纹砖怎么配家具、通铺好还是分区好、瓷砖大板怎么选、铺贴工艺、装修避坑、小空间选材、客厅地砖、美缝怎么选）逐个收集微信搜一搜下拉联想词/问一问同类高频提问，选「搜索需求迹象最强（下拉词命中/同类提问多）× 利他性最高」的一题；题材形态优先：对比结论型 / 避坑清单型 / 数字锚点科普型（标题带具体数字或人群锚点）。备选来源：读 ~/.workbuddy/skills/gzh-daily-pipeline/references/topics-pool.md 里的科普类未用选题；选题入池标记已用、新发现的真实搜索问题随手追加。选题理由中注明命中了哪个搜索词。
 ②写稿：按 references/writing-rules.md 执行，1200～1800字，面向业主与同行，干货密度高、可收藏，标题带具体数字或人群锚点（如「装修小白」「第一次铺砖」），去AI味六条自查，数据给得出处不编造。
 保密红线：全文与选题不得出现任何真实客户/雇主/品牌方名称，案例一律匿名化（「某展厅项目」「一家建材企业」），不写可反查的地名+业态组合。
-③封面（每篇必做，禁止留空）：用 ImageGen 生成 2.35:1 比例封面，材质肌理/空间感风格（与主栏目风格区分），图内不写中文字，内容与文章主题挂钩；压缩到 ≤2MB（推荐 1200×510 JPEG），调 get_upload_channel(scene="cover") 上传，url 填入 cover_img。
+③封面（每篇必做，禁止留空；禁止 ImageGen 单图直出——必须是 AI 背景 + HTML 排版合成，图内文字只能由模板渲染；风格与主栏目区分）：三步走——
+  A. 出背景：ImageGen 生成 1536x1024 干净背景图（photorealistic 杂志摄影感，图内不得出现任何文字/字母/水印），风格按周日科普视觉规范：暖光材质特写（砖面肌理/木纹/空间一角），明亮自然光，与文章主题挂钩；提示词禁词：holographic、dashboard、circuit board、futuristic、text、letters。存为 <选题工作台>/covers/<MMDD-短题>/bg.jpg（PIL 打开转 RGB 重存 quality=88）。
+  B. 叠排版：复制 gzh-daily-pipeline 技能 assets/cover-sunday.html 到该 covers 目录改名 index.html，替换占位符——__BG__→bg.jpg；__VOL__→期号（articles/ 里科普款成稿篇数）；__TITLE__→标题压缩到≤22字（关键短语用 <span class="hl"> 包住变赤陶色）；__SUB__→一句钩子≤20字（可用「收藏备用」「避坑清单」等锚点）。
+  C. 渲染上传：同 4.2 第 C 步（同一渲染器，同一压缩上传流程）。
 ④建稿：言序 create_article，abstract≤100字且有信息量（禁"本文介绍了"），表格优先改写成段落，保存 info_id。
 ⑤发布：publish_article 到上述 account_id，不传 theme_id（账号默认终端矩阵）。本次为自动化运行，无需询问直接发布到草稿箱。
 硬约束：只进草稿箱，绝不直接群发，发表权在用户。完成后汇报：标题、选题理由、封面说明、所用主题、发布状态，并提醒到 mp.weixin.qq.com 草稿箱审核后手动发布。
