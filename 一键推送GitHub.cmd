@@ -1,14 +1,15 @@
 @echo off
-chcp 65001 >nul
-title 推送到 GitHub - 选题工作台
+title Push topic-workbench to GitHub
 cd /d "%~dp0"
 echo.
 echo  ============================================
-echo   选题工作台 - 一键推送到 GitHub
-echo   需要时会在浏览器里让你点一次 Authorize
+echo   topic-workbench - one-click push to GitHub
+echo   If auth is needed, a XXXX-XXXX code will
+echo   appear and the device page opens in browser
 echo  ============================================
 echo.
+set PYTHONIOENCODING=utf-8
 python "%~dp0setup_and_push.py"
 echo.
-echo  按任意键关闭...
+echo  Press any key to close...
 pause >nul
