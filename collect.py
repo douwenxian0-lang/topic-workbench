@@ -15,6 +15,21 @@ ACCOUNTS_F = os.path.join(BASE, "accounts.json")
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
       "Accept-Language": "zh-CN,zh;q=0.9"}
 
+# ---------- 内容类型自动打标签（入池时按标题+摘要判定）----------
+# 五类：复盘（第一人称经历/踩坑）/ 横测（对比评测）/ 清单（盘点合集）/ 教程（方法论）/ 资讯（行业新闻）
+# 日更取题只取「可迁移结构」类（复盘/横测/教程/清单），资讯类仅作行业情报。
+def classify(title, digest=""):
+    t = f"{title} {digest}"
+    if re.search(r"翻车|踩坑|踩了|避坑|复盘|折腾|坑了|被坑|翻大车|教训|亲历|我把|我做了|公开我|开源我|分享我|分享这|这一年|这几年|卖了|卖爆|烧了|求职|辞职", t):
+        return "复盘"
+    if re.search(r"横测|同台|大乱斗|极限横|\d+款|\d+个.{0,6}(模型|工具|产品)|vs|VS|对打|哪款|哪家|谁更|对比|评测|实测", t):
+        return "横测"
+    if re.search(r"清单|盘点|合集|汇总|资源|神器|宝藏|工具箱|名单", t):
+        return "清单"
+    if re.search(r"教程|指南|一文|怎么|如何|步骤|手册|入门|玩法|方法|实操|提示词|技巧|干货|抄作业|搭建|讲透|大白话|避雷|攻略", t):
+        return "教程"
+    return "资讯"
+
 def load_json(p, default):
     if os.path.exists(p):
         try: return json.load(open(p, encoding="utf-8"))
@@ -60,7 +75,7 @@ def fetch_mp(url):
     # id 必须全局唯一：用完整链接（去 fragment）的 md5，避免 mp 链接前缀相同导致的 id 冲突
     key = url.split("#")[0].strip().replace("http://", "https://")
     return {"id": "mp" + hashlib.md5(key.encode("utf-8")).hexdigest()[:16], "link": url, "title": H.unescape(title),
-            "account": account, "date": date, "cover": cover, "digest": digest, "content": content, "status": "待看", "added": datetime.date.today().isoformat()}
+            "account": account, "date": date, "cover": cover, "digest": digest, "content": content, "tag": classify(title, digest), "status": "待看", "added": datetime.date.today().isoformat()}
 
 # ---------- 搜狗模式：尽力而为，遇验证码自动跳过 ----------
 def parse_sogou_time(t):
@@ -108,7 +123,7 @@ def sogou_search(account, pages=1):
             art_id = "sg" + hashlib.md5(f"{real_acc}|{date}|{title}".encode("utf-8")).hexdigest()[:16]
             out.append({"id": art_id, "link": link, "title": title,
                         "account": real_acc or account, "date": date,
-                        "cover": "", "digest": digest, "status": "待看", "added": datetime.date.today().isoformat()})
+                        "cover": "", "digest": digest, "tag": classify(title, digest), "status": "待看", "added": datetime.date.today().isoformat()})
     return out
 
 def merge(old, items):
